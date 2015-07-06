@@ -174,7 +174,7 @@ class PaymentOrderCreate(models.TransientModel):
         # support debit orders when enabled
         if (payment.payment_order_type == 'debit' and
                 'amount_to_receive' in line):
-            amount_currency = line.amount_to_receive
+            amount_currency = line.amount_residual_currency
         else:
             amount_currency = line.amount_residual_currency
         line2bank = line.line2bank(payment.mode.id)
