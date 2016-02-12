@@ -1,9 +1,7 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Account Payment Purchase module for OpenERP
-#    Copyright (C) 2014 Akretion (http://www.akretion.com)
-#    @author Alexis de Lattre <alexis.delattre@akretion.com>
+#    This module copyright (C) 2015 Therp BV (<http://therp.nl>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,6 +18,20 @@
 #
 ##############################################################################
 
-from . import procurement_order
-from . import purchase_order
-from . import stock_picking
+
+def migrate(cr, version):
+    cr.execute(
+        'SELECT count(attname) FROM pg_attribute '
+        'WHERE attrelid = '
+        '( SELECT oid FROM pg_class WHERE relname = %s ) '
+        'AND attname = %s',
+        ('payment_order', 'total'))
+    if cr.fetchone()[0] == 0:
+        cr.execute('alter table payment_order add column total numeric')
+    cr.execute(
+        'update payment_order '
+        'set total=totals.total '
+        'from '
+        '(select order_id, sum(amount_currency) total '
+        'from payment_line group by order_id) totals '
+        'where payment_order.id=totals.order_id')
